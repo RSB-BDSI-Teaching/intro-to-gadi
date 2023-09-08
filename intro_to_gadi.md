@@ -1,8 +1,18 @@
 # Introduction to Gadi
 
-## Learning Objectives 
+## Workshop Contents 
+
+* Logging in to Gadi
+* Run FastQC analysis on DNA sequencing data 
+* Align reads to reference genome 
+* 
+
 
 ## Logging in to Gadi
+
+There are two ways to log in to Gadi, SSH and are@NCI's web terminal. 
+
+__1. SSH__ 
 
 When you created an account with NCI, you will be assigned a __username__. To logging into Gadi, we can run the ssh command in our local terminal.
 
@@ -10,7 +20,21 @@ When you created an account with NCI, you will be assigned a __username__. To lo
 ssh username@gadi.nci.org.au 
 ```
 
-The password would be your NCI account password. Once the password is accepted, the ssh connection will be established on one of the ten Gadi login nodes, __gadi-login-xx__, where xx=[01, 10]. Note that Gadi login nodes are separate from the Gadi compute notes on which jobs actually run. 
+The password would be your NCI account password. Once the password is accepted, the ssh connection will be established on one of the ten Gadi login nodes.
+
+__2. are@NCI's web terminal__
+
+If you don't have a local terminal and SSH installed on your laptop. You can use are@NCI's web terminal tool to log into Gadi. 
+
+Go to this [page](https://are.nci.org.au/) and use your NCI username and password to log in. 
+
+![are-nci-login](figures/are-nci-login.png)
+
+After logging in, please click Gadi Terminal to start using Gadi. 
+
+![gadi-terminal](figures/gadi-terminal.png)
+
+## Welcome Message 
 
 Once the connection is established, you will see a welcome message on your screen:
 
@@ -44,15 +68,62 @@ Project a00 is at 97.79% of gdata inode capacity (580.71 K)
 [username@gadi-login-05 ~]$ 
 ```
 
-__Message of the Day:__
+## Create a directory under /scratch/vp91
 
-Under the welcome text is the Message of the Day. Please consider it a notice board and read it on every login. News and status updates relevant to Gadi users will be posted on it. 
+```sh
+mkdir /scratch/vp91/username
+cd /scratch/vp91/username
+mkdir fastqc-results
+nano run_fastqc.sh 
+```
 
-__Usage Limit on Login Nodes__
+```sh
+#!/bin/bash
 
-Users can only run a limited types of commands on the login nodes, such as submitting/monitoring jobs, preparing scripts, compling small applications, and transferring small amount of data etc. All other types of workloads are encouraged to be submitted as a job. 
+#PBS -l ncpus=4
+#PBS -l mem=10GB
+#PBS -l jobfs=10GB
+#PBS -q normal
+#PBS -P vp91
+#PBS -l walltime=01:00:00
+#PBS -l storage=scratch/vp91
+#PBS -l wd
 
-To ensure fair usage of login nodes, any process that use more than 30 minutes CPU time or instantly use more than 4 GiB memory on any login node will be killed immediately. 
+module load bwa/0.7.17
+module load samtools/1.9
+module load bcftools/1.9
+
+fastq_dir=/scratch/vp91/ANU-Bioinfomatics-2023/data
+genome=/scratch/vp91/ANU-Bioinfomatics-2023/ref-genome/ecoli_rel606.fa
+out_dir=/scratch/vp91/jl6157/vc-results
+
+for i in ${fastq_dir}/*_1.trim.fastq.gz
+do
+        base=$(basename $i _1.trim.fastq.gz)
+        fq1=${fastq_dir}/${base}_1.trim.fastq.gz
+        fq2=${fastq_dir}/${base}_2.trim.fastq.gz
+
+        echo "Aligning sample $base"
+
+        bam=${out_dir}/${base}.aligned.bam
+        sorted_bam=${out_dir}/${base}.aligned.sorted.bam
+
+        bwa mem -t 4 $genome $fq1 $fq2 | samtools view -S -b > $bam
+        samtools sort -o $sorted_bam $bam
+
+        echo "Calling variants for sample $base"
+
+        raw_bcf=${out_dir}/${base}_raw.bcf
+        variants=${out_dir}/${base}_variants.vcf
+        final_variants=${out_dir}/${base}_final_variants.vcf
+
+        bcftools mpileup --threads 4 -O b -o $raw_bcf -f $genome $sorted_bam
+        bcftools call --ploidy 1 -m -v -o $variants $raw_bcf
+        vcfutils.pl varFilter $variants > $final_variants
+done
+```
+
+
 
 ## Gadi Resources 
 
