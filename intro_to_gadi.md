@@ -1,8 +1,11 @@
 # Introduction to Gadi
 
-## Workshop Contents 
+## Learning Objectives 
 
-* Logging in to Gadi
+* Logging in to Gadi via SSH or are@NCI's web terminal 
+* Explore scratch and gdata folder 
+* Understand how to use software on Gadi 
+
 * Run FastQC analysis on DNA sequencing data 
 * Align reads to reference genome 
 * 
@@ -34,7 +37,7 @@ After logging in, please click Gadi Terminal to start using Gadi.
 
 ![gadi-terminal](figures/gadi-terminal.png)
 
-## Welcome Message 
+__Welcome Message:__
 
 Once the connection is established, you will see a welcome message on your screen:
 
@@ -68,7 +71,58 @@ Project a00 is at 97.79% of gdata inode capacity (580.71 K)
 [username@gadi-login-05 ~]$ 
 ```
 
-## Create a directory under /scratch/vp91
+## Explore your `home`, `scratch`, and `gdata` directories
+
+At login, your landing point is your home directory. You will see the tilde sign `~` before the command prompt indicating you are in your home directory. 
+
+You can also use `pwd` to check what the full path of your home directory is. 
+
+```sh
+[username@gadi-login-05 ~]$ pwd
+/home/001/username
+```
+
+There are 3 places where you can store your data:
+
+* Your home directory, which has 10 GiB storage.
+* The `/scratch/project` directory, which has 72 GiB storage by default. Files not accessed for more than 100 days are automatically moved from project directories. 
+* The `/g/data/project` directory, the amount of storage is set by the scheme manager. You can log in to [MyNCI](http://my.nci.org.au/) to check your project's allocation. 
+
+__Let's go to the `/scratch` directory.__
+
+```sh
+cd /scratch 
+ls
+```
+
+You should see results look like this:
+
+```
+public  project1  project2
+```
+
+The different directories belong to different projects. 
+
+__Let's go to the `/g/data` directory.__
+
+```sh
+cd /g/data
+ls
+```
+
+The result should look like this:
+
+```
+a01  a02  a03  a04  a05  a06  a07  a08  a09  a10  
+a11  a12  a13  a14  a15  a16  a17  a18  a19  a20
+```
+
+The directories are belong to different projects, and if you have enrolled in a project, you should find your project directory here. The `training project` we enrolled in does not have a gdata folder so you won't find a directory here. 
+
+
+
+
+## Run the variant-calling workflow 
 
 ```sh
 mkdir /scratch/vp91/username
@@ -80,7 +134,7 @@ nano run_fastqc.sh
 ```sh
 #!/bin/bash
 
-#PBS -l ncpus=4
+#PBS -l ncpus=8
 #PBS -l mem=10GB
 #PBS -l jobfs=10GB
 #PBS -q normal
@@ -93,9 +147,11 @@ module load bwa/0.7.17
 module load samtools/1.9
 module load bcftools/1.9
 
-fastq_dir=/scratch/vp91/ANU-Bioinfomatics-2023/data
-genome=/scratch/vp91/ANU-Bioinfomatics-2023/ref-genome/ecoli_rel606.fa
-out_dir=/scratch/vp91/jl6157/vc-results
+fastq_dir=/scratch/vp91/ANU-Bioinformatics-2023/data
+genome=/scratch/vp91/ANU-Bioinformatics-2023/ref-genome/ecoli_rel606.fa
+out_dir=~/variant-calling/results
+
+mkdir -p $out_dir 
 
 for i in ${fastq_dir}/*_1.trim.fastq.gz
 do
@@ -108,7 +164,7 @@ do
         bam=${out_dir}/${base}.aligned.bam
         sorted_bam=${out_dir}/${base}.aligned.sorted.bam
 
-        bwa mem -t 4 $genome $fq1 $fq2 | samtools view -S -b > $bam
+        bwa mem -t 8 $genome $fq1 $fq2 | samtools view -S -b > $bam
         samtools sort -o $sorted_bam $bam
 
         echo "Calling variants for sample $base"
@@ -117,11 +173,22 @@ do
         variants=${out_dir}/${base}_variants.vcf
         final_variants=${out_dir}/${base}_final_variants.vcf
 
-        bcftools mpileup --threads 4 -O b -o $raw_bcf -f $genome $sorted_bam
+        bcftools mpileup --threads 8 -O b -o $raw_bcf -f $genome $sorted_bam
         bcftools call --ploidy 1 -m -v -o $variants $raw_bcf
         vcfutils.pl varFilter $variants > $final_variants
 done
 ```
+
+Save and exit the script. 
+
+__Submitting the job using `qsub`__:
+
+```sh
+qsub run_vc.sh 
+```
+
+## Checking your job status 
+
 
 
 
