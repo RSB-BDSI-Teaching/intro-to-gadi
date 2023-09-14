@@ -68,7 +68,7 @@ Mar 21 Sapphire Rapids Nodes Available
    For more information, please see https://opus.nci.org.au/x/gIDAD
 ===============================================================================
 Project a00 is at 97.79% of gdata inode capacity (580.71 K)
-[username@gadi-login-05 ~]$ 
+[us1234@gadi-login-05 ~]$ 
 ```
 
 ## Explore your `home`, `scratch`, and `gdata` directories
@@ -78,11 +78,11 @@ At login, your landing point is your home directory. You will see the tilde sign
 You can also use `pwd` to check what the full path of your home directory is. 
 
 ```sh
-[username@gadi-login-05 ~]$ pwd
-/home/001/username
+[us1234@gadi-login-05 ~]$ pwd
+/home/001/us1234
 ```
 
-There are 3 places where you can store your data:
+There are 3 places where you can store your data on Gadi:
 
 * Your home directory, which has 10 GiB storage.
 * The `/scratch/project` directory, which has 72 GiB storage by default. Files not accessed for more than 100 days are automatically moved from project directories. 
@@ -118,6 +118,48 @@ a11  a12  a13  a14  a15  a16  a17  a18  a19  a20
 ```
 
 The directories are belong to different projects, and if you have enrolled in a project, you should find your project directory here. The `training project` we enrolled in does not have a gdata folder so you won't find a directory here. 
+
+__Check how much storage you have access to using `lquota`:__
+
+```
+[us1234@gadi-login-06 ~]$ lquota
+--------------------------------------------------------------------------
+           fs       Usage      Quota      Limit   iUsage   iQuota   iLimit
+--------------------------------------------------------------------------
+   a00 scratch 520.17 GiB   1.00 TiB   1.05 TiB     4531   369634   388115
+   a01 scratch   2.11 TiB   5.00 TiB   5.25 TiB   948753 10485760 11010048
+   a00   gdata   2.26 TiB   4.00 TiB   4.20 TiB   588867   600000   630000
+--------------------------------------------------------------------------
+```
+
+Apart from storage limitation, there is also a quota called `iQuota` applied to the storage allocation on `/scratch` and `/g/data`. It sets the maximum number of files allowed in the project which `iUsage` shows the existing number of files and `iQuota` shows the file-number limit. 
+
+__Checking personal usage on projects using `nci-files-report`:__
+
+```
+[us1234@gadi-login-03 ~]$ nci-files-report
+------------------BREAKDOWN BY PROJECT, GROUP, AND USER-------------------
+FILESYSTEM  SCAN DATE   PROJECT  GROUP  USER    SPACE USED  TOTAL SIZE  COUNT
+scratch     2023-09-14  a00      a00    us1234      882.5M      882.5M  15
+scratch     2023-09-14  a01      a01    us1234        8.0K        8.0K  2
+--------------------------------------------------------------------------
+
+------------------SUMMARIES-------------------
+FILESYSTEM  USER    SPACE USED  TOTAL SIZE  COUNT
+scratch     us1234      882.5M      882.5M  17
+----------------------------------------------
+```
+
+It returns a summary of your usage on each project and on each folder. If you don't have any files created, it will return nothing. 
+
+You can also use options to limit the results shown, try `nci-files-report -h` to learn more about the command. 
+
+
+
+
+
+
+## Job Folder $PBS_JOBFS 
 
 
 
