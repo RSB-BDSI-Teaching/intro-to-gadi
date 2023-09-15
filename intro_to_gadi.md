@@ -3,8 +3,8 @@
 ## Learning Objectives 
 
 * Logging in to Gadi via SSH or are@NCI's web terminal 
-* Explore scratch and gdata folder 
-* Understand how to use software on Gadi 
+* Explore home, scratch, and gdata folder 
+* Use software applications on Gadi 
 
 * Run FastQC analysis on DNA sequencing data 
 * Align reads to reference genome 
@@ -153,6 +153,154 @@ scratch     us1234      882.5M      882.5M  17
 It returns a summary of your usage on each project and on each folder. If you don't have any files created, it will return nothing. 
 
 You can also use options to limit the results shown, try `nci-files-report -h` to learn more about the command. 
+
+## Use software applications on Gadi 
+
+Gadi has many software applications centrally installed and uses Environmental Modules to manage them. To run any of the them, we need to load the corresponding module first. If the application requires license, join the corresponding software group through [my.nci.org.au](my.nci.org.au). 
+
+If the applications or packages you need are not centrally installed on Gadi, please contact [help@nci.org.au](https://nci.org.au/users/nci-helpdesk) to discuss whether it is suitable to install the missing ones centrally on Gadi. If it cannot be centrally installed, you can also contact the help desk to assist you to install it inside of your project folder. 
+
+__Search for centrally installed applications:__ 
+
+The command `module avail` prints out the complete list of software applications centrally available on Gadi. To look for a specific application, you can run `module avail app_name`. For example, we are going to use 3 different software for the variant calling workflow which are BWA, SAMtools, and BCFtools. We can try search them.
+
+```
+[us1234@gadi-login-06 ~]$ module avail bwa
+----------------------------------------- /apps/Modules/modulefiles -----------------------------------------
+bwa-mem2/2.2.1  bwa/0.7.17 
+```
+
+```sh
+[us1234@gadi-login-06 ~]$ module avail samtools
+----------------------------------------- /apps/Modules/modulefiles -----------------------------------------
+samtools/1.9  samtools/1.10  samtools/1.12 
+```
+
+```sh
+[us1234@gadi-login-06 ~]$ module avail bcftools
+----------------------------------------- /apps/Modules/modulefiles -----------------------------------------
+bcftools/1.9  bcftools/1.12  
+```
+
+All of the software we need are available on Gadi. 
+
+__Running applications:__
+
+Before running the application, we need to load the corresponding module by running `module load app_name/version`. For example, to load the applications we need in variant calling. 
+
+```
+[us1234@gadi-login-06 ~]$ module load bwa/0.7.17
+[us1234@gadi-login-06 ~]$ bwa
+
+Program: bwa (alignment via Burrows-Wheeler transformation)
+Version: 0.7.17-r1188
+Contact: Heng Li <lh3@sanger.ac.uk>
+
+Usage:   bwa <command> [options]
+
+Command: index         index sequences in the FASTA format
+         mem           BWA-MEM algorithm
+         fastmap       identify super-maximal exact matches
+         pemerge       merge overlapping paired ends (EXPERIMENTAL)
+         aln           gapped/ungapped alignment
+         samse         generate alignment (single ended)
+         sampe         generate alignment (paired ended)
+         bwasw         BWA-SW for long queries
+
+         shm           manage indices in shared memory
+         fa2pac        convert FASTA to PAC format
+         pac2bwt       generate BWT from PAC
+         pac2bwtgen    alternative algorithm for generating BWT
+         bwtupdate     update .bwt to the new format
+         bwt2sa        generate SA from BWT and Occ
+
+Note: To use BWA, you need to first index the genome with `bwa index'.
+      There are three alignment algorithms in BWA: `mem', `bwasw', and
+      `aln/samse/sampe'. If you are not sure which to use, try `bwa mem'
+      first. Please `man ./bwa.1' for the manual.
+```
+
+```
+[us1234@gadi-login-06 ~]$ module load samtools/1.9
+[us1234@gadi-login-06 ~]$ samtools --version
+samtools 1.9
+Using htslib 1.9
+Copyright (C) 2018 Genome Research Ltd.
+```
+
+```
+[us1234@gadi-login-06 ~]$ module load bcftools/1.9
+Loading bcftools/1.9
+  Loading requirement: intel-mkl/2019.3.199 python2/2.7.16
+[us1234@gadi-login-06 ~]$ bcftools --version
+bcftools 1.9
+Using htslib 1.9
+Copyright (C) 2018 Genome Research Ltd.
+License Expat: The MIT/Expat license
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+```
+
+Here, we didn't actually run the software. Instead we tested if the commands are working. We will run the software on our sample data later when we create an interactive job session because the program would be killed if we run it directly in command line. 
+
+__Check currently loaded modules:__
+
+We can use `module list` command to check all currently loaded modules. 
+
+```
+[us1234@gadi-login-06 ~]$ module list
+Currently Loaded Modulefiles:
+ 1) pbs   2) bwa/0.7.17   3) samtools/1.9   4) intel-mkl/2019.3.199   5) python2/2.7.16   6) bcftools/1.9
+```
+
+__Unload modules:__
+
+To unload a module, we can run `module unload app_name`. When unloading a module, we don't need to specify the version number because two versions of the same application cannot be loaded at the same time. 
+
+```
+[us1234@gadi-login-08 ~]$ module unload bcftools
+Unloading bcftools/1.9
+  Unloading useless requirement: python2/2.7.16
+[us1234@gadi-login-08 ~]$ module unload samtools
+[us1234@gadi-login-08 ~]$ module unload bwa
+```
+
+We can run `module list` again to check currently loaded modules. 
+
+```
+[us1234@gadi-login-08 ~]$ module list
+Currently Loaded Modulefiles:
+ 1) pbs   2) intel-mkl/2019.3.199 
+```
+
+## Submit jobs on Gadi 
+
+There are generally two types of jobs. One is normal jobs where you can run simulation, modelling, and analysis tasks. The other one is copyq jobs where you can download, upload, and transfer data to and from Gadi, and it requires internet connection. 
+
+__Normal Jobs:__
+
+Here is an example job submission script to run FastQC analysis on 6 FASTQ files storing DNA sequencing data. 
+
+```sh
+#!/bin/bash
+ 
+#PBS -l ncpus=2
+#PBS -l mem=10G
+#PBS -l jobfs=10G
+#PBS -q normal
+#PBS -P a00
+#PBS -l walltime=02:00:00
+#PBS -l storage=scratch/a00
+#PBS -l wd
+
+!should add the mailing option 
+
+mkdir -p /scratch/a00/us1234/fastqc-results/ 
+
+module load fastqc/0.11.7 
+
+fastqc -t 2 -o /scratch/a00/us1234/fastqc-results/ /scratch/a00/ANU-Bioinformatics-2023/data/*.fastq.gz 
+```
 
 
 
