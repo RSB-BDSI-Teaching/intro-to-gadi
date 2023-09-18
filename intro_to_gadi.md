@@ -285,15 +285,15 @@ Here is an example job submission script to run FastQC analysis on 6 FASTQ files
 #!/bin/bash
  
 #PBS -l ncpus=2
-#PBS -l mem=10G
-#PBS -l jobfs=10G
+#PBS -l mem=10GB
+#PBS -l jobfs=10GB
 #PBS -q normal
 #PBS -P a00
 #PBS -l walltime=02:00:00
 #PBS -l storage=scratch/a00
 #PBS -l wd
-
-!should add the mailing option 
+#PBS -M email_address
+#PBS -m be 
 
 mkdir -p /scratch/a00/us1234/fastqc-results/ 
 
@@ -302,6 +302,77 @@ module load fastqc/0.11.7
 fastqc -t 2 -o /scratch/a00/us1234/fastqc-results/ /scratch/a00/ANU-Bioinformatics-2023/data/*.fastq.gz 
 ```
 
+Please create a new script `run_fastqc.sh` and input the code in. 
+
+To submit the job, run `qsub run_fastqc.sh`. You will be prompted with a job number after submitting. 
+
+In the script, we set up to receive an email when the job start running and when it finishes. After the job finishes, you can go into your output directory and check the result. 
+
+__Transfer Data to and from and Gadi:__
+
+If you would like to download data from Gadi to your local computer. You can use the `scp` command in the command line. 
+
+```sh
+scp source destination
+```
+
+Let's download the HTML files from our FastQC analysis, and we can use the browser to look at the result. 
+
+```sh
+scp us1234@gadi.nci.org.au:/scratch/a00/us1234/fastqc-results/*.html .
+```
+
+You will be asked to fill in the password of your NCI account. 
+
+```
+us1234@gadi.nci.org.au's password:
+```
+
+After filling in the password, downloads will start automatically. 
+
+```
+SRR2584863_1.trim_fastqc.html                                                         100%  243KB  12.6MB/s   00:00
+SRR2584863_2.trim_fastqc.html                                                         100%  246KB  14.1MB/s   00:00
+SRR2584866_1.trim_fastqc.html                                                         100%  245KB  10.6MB/s   00:00
+SRR2584866_2.trim_fastqc.html                                                         100%  244KB  12.8MB/s   00:00
+SRR2589044_1.trim_fastqc.html                                                         100%  245KB  12.6MB/s   00:00
+SRR2589044_2.trim_fastqc.html                                                         100%  246KB  14.9MB/s   00:00
+```
+
+Uploading files to Gadi works the same, simply put the local files as source and Gadi address as the destination:
+
+```sh
+scp /path/to/localfiles user@gadi.nci.org.au:/path/to/destination 
+```
+
+__Copyq Jobs:__
+
+For transfer of bulk data (more than 500 GiB), it is recommended to do it by submitting a job in the queue of `copyq`. Because processes running on the login node will be terminated when reaching 30 minutes. Long software installations that require an internet connection are also recommended to be run inside copyq jobs. 
+
+An example of copyq job submission script:
+
+```sh
+#!/bin/bash
+ 
+#PBS -l ncpus=1
+#PBS -l mem=2GB
+#PBS -l jobfs=2GB
+#PBS -q copyq
+#PBS -P a00
+#PBS -l walltime=02:00:00
+#PBS -l storage=scratch/a00
+#PBS -l wd
+#PBS -M email_address
+#PBS -m be 
+
+cd /scratch/a00/us1234
+
+curl -O ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR258/004/SRR2589044/SRR2589044_1.fastq.gz
+```
+
+__Interactive Jobs:__
+
+It is recommended that users try their workflow on Gadi in an interative job before submitting the tasks as jobs. 
 
 
 
@@ -382,42 +453,7 @@ qsub run_vc.sh
 
 
 
-## Gadi Resources 
 
-Gadi has a lot of resources we can use to perform various tasks, and here I will introduce a few that are most relavant to us biologists. 
-
-#### Compute Hours - granted to projects 
-
-To run jobs on Gadi, users need to have sufficient compute hours available. The compute allocations are granted to projects instead of directly to users. Only members of a project can look up and use its compute allocation. The amount of compute hours is set by scheme manager and is belong to a project. Allocation is valid for a quarter and will be reset in the next quarter. 
-
-To look up how much compute allocation in your project, you can run:
-
-```sh
-nci_account 
-```
-
-You should see message like this:
-
-```
-Usage Report: Project=a00 Period=2023.q3
-=============================================================
-    Grant:   150.00 KSU
-     Used:    76.86 KSU
- Reserved:     0.00 SU
-    Avail:    73.14 KSU
-
-
-Storage Usage Report: Project=a00
-=============================================================
-Filesystem        Used     iUsed    Allocation    iAllocation
-gdata1b        2.31 TiB  586.71 K     4.00 TiB       600.00 K
-scratch2     520.17 GiB    4.53 K     1.00 TiB       369.63 K
-=============================================================
-```
-
-__SU (Service Unit)__: is the unit that measures Gadi compute hours. Jobs run on the Gadi normal queue are charged 2 SUs to run for an hour on a single core with a memory allocation of up to 4 GiB. Jobs on Gadi are charged for the proportion of a node's total memory that is used, see more about job cost [here](https://opus.nci.org.au/display/Help/2.2+Job+Cost+Examples). In addition, different Gadi quenes have different charge rates, see the breakdown of charge rates [here](https://opus.nci.org.au/display/Help/Queue+Structure). 
-
-#### Home Directory 
 
 
 
