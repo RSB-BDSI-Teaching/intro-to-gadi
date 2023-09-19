@@ -308,7 +308,7 @@ To submit the job, run `qsub run_fastqc.sh`. You will be prompted with a job num
 
 In the script, we set up to receive an email when the job start running and when it finishes. After the job finishes, you can go into your output directory and check the result. 
 
-__Transfer Data to and from and Gadi:__
+__Transfer Data to and from Gadi:__
 
 If you would like to download data from Gadi to your local computer. You can use the `scp` command in the command line. 
 
@@ -370,27 +370,84 @@ cd /scratch/a00/us1234
 curl -O ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR258/004/SRR2589044/SRR2589044_1.fastq.gz
 ```
 
+* `-l ncpus=1` to reserve 1 CPU for the job
+* `-l mem=2GB` to reserve 2GB RAM 
+* `-l jobfs=2GB` to reserve 2GB local disk storage on the hosting compute nodes
+* `-q copyq` to run job in the copyq queue 
+* `-P a00` to charge the job on project a00
+* `-l walltime=02:00:00` set the time limit to 2 hours 
+* `-l storage=scratch/a00` identifies the specific file systems that the job will need access to 
+* `-l wd` entering the directory where the job was submitted at the start of the job 
+* `-M email_address` the email address to which emails about the job will be sent 
+* `-m be` specify what types of emails will be sent, `a` for job aborted, `b` for job begins execution, and `e` for job ends execution
+
 __Interactive Jobs:__
 
 It is recommended that users try their workflow on Gadi in an interative job before submitting the tasks as jobs. 
 
+To submit an interactive job, run `qsub -I` on the login node. 
 
+For example, to start an interative job on Gadi's normal queue through project a00 with the request of 8 CPU cores, 10 GiB memory, and 10 GiB local disk for 30 minutes, we can run:
 
+```sh
+qsub -I -qnormal -Pa00 -lwalltime=00:30:00,ncpus=8,mem=10GB,jobfs=10GB,storage=scratch/a00,wd
+```
 
+It may take some time for the job to start, you can tell the interactive job has been started by the prompt changing from `user@gadi-login-03 ~` to `user@gadi-cpu-clx-1274 ~`. It means we have moved from the login node to one of Gadi's compute nodes. 
 
-## Job Folder $PBS_JOBFS 
+Now, we will run a variant calling workflow step to step to test if the pipeline works properly. 
 
+1. Load modules
 
+These are the 3 software we need to run our workflow, let's load them all. 
 
+```sh
+cd /scratch/vp91/user1234
+module load bwa/0.7.17
+module load samtools/1.9
+module load bcftools/1.9
+```
+
+2. Align reads to reference genome
+
+```sh
+bwa mem -t 8 /scratch/vp91/ANU-Bioinformatics-2023/ref-genome/ecoli_rel606.fa /scratch/vp91/ANU-Bioinformatics-2023/data/SRR2584863_1.trim.fastq.gz /scratch/vp91/ANU-Bioinformatics-2023/data/SRR2584863_1.trim.fastq.gz | samtools view -S -b > SRR2584863.aligned.bam
+```
+
+3. Sort the alignment
+
+```sh
+samtools sort -o SRR2584863.aligned.sorted.bam SRR2584863.aligned.bam
+```
+
+4. Caculate reads coverage
+
+```sh
+bcftools mpileup --threads 8 -O b -o SRR2584863_raw.bcf -f /scratch/vp91/ANU-Bioinformatics-2023/ref-genome/ecoli_rel606.fa SRR2584863.aligned.sorted.bam
+```
+
+5. Call the variants 
+
+```sh
+bcftools call --ploidy 1 -m -v -o SRR2584863_variants.vcf SRR2584863_raw.bcf
+```
+
+6. Filter the variants 
+
+```sh
+vcfutils.pl varFilter SRR2584863_variants.vcf > SRR2584863_final_variants.vcf
+```
+
+__Exit interactive jobs:__
+
+When we finished testing, we can run `exit` in the command line to terminate the interactive job and go back to the login node. 
+
+If all the steps work properly, we can write the codes into a script and submit to a job for the analyses. Normally, there are multiple samples we need to analyse and using loop to analyse all samples at once is necessary. 
 
 ## Run the variant-calling workflow 
 
-```sh
-mkdir /scratch/vp91/username
-cd /scratch/vp91/username
-mkdir fastqc-results
-nano run_fastqc.sh 
-```
+Here, I put the codes together into a script and it can loop through all of our samples in the data folder. 
+
 
 ```sh
 #!/bin/bash
@@ -410,7 +467,7 @@ module load bcftools/1.9
 
 fastq_dir=/scratch/vp91/ANU-Bioinformatics-2023/data
 genome=/scratch/vp91/ANU-Bioinformatics-2023/ref-genome/ecoli_rel606.fa
-out_dir=~/variant-calling/results
+out_dir=/scratch/vp91/user1234/vc-results
 
 mkdir -p $out_dir 
 
