@@ -442,12 +442,11 @@ __Exit interactive jobs:__
 
 When we finished testing, we can run `exit` in the command line to terminate the interactive job and go back to the login node. 
 
-If all the steps work properly, we can write the codes into a script and submit to a job for the analyses. Normally, there are multiple samples we need to analyse and using loop to analyse all samples at once is necessary. 
+If all the steps work properly, we can write the codes into a script and submit to a job for analyses. Normally, there are multiple samples we need to analyse and using loop to analyse all samples at once is necessary. 
 
-## Run the variant-calling workflow 
+## Submitting the Variant Calling Workflow 
 
-Here, I put the codes together into a script and it can loop through all of our samples in the data folder. 
-
+Here, I put the codes together into a script and it can loop through all of our samples in the data folder. Please create a new script `run_vc.sh` and input the following code in, then submit it as a job.  
 
 ```sh
 #!/bin/bash
@@ -497,42 +496,55 @@ do
 done
 ```
 
-Save and exit the script. 
+__Exercise: change the CPU number to 4 and re-submit the job to compare the time difference.__ 
 
-__Submitting the job using `qsub`__:
+## Job Monitoring 
+
+Once a job submission is accepted, its Job ID is shown in the return message and can be used to monitor the job's status. Users are encouraged to keep monitoring their own jobs at every stage of their lifespan on Gadi. However, excessive polling of the PBS servers for monitoring purposes will be considered attacks. A frequency of one monitoring query every 10 minutes is more than enough. 
+
+__Queue status:__
+
+To look up the status of a job in the queue, we can use the command `qstat`. For example, to loop up the job 12345678 in the queue:
 
 ```sh
-qsub run_vc.sh 
+qstat -swx 12345678
 ```
 
-## Checking your job status 
+If the job is running, you would see something like:
 
+```
+gadi-pbs:
+                                                                                                   Req'd  Req'd   Elap
+Job ID                         Username        Queue           Jobname         SessID   NDS  TSK   Memory Time  S Time
+------------------------------ --------------- --------------- --------------- -------- ---- ----- ------ ----- - -----
+12345678.gadi-pbs              aaa777          normal-exec     job.sh          2545114    1    48  190gb  02:00 R 00:35:21
+   Job run at Fri Sep 04 at 10:38 on (gadi-cpu-clx-2697:ncpus=48:mem=199229440kb:jobfs=209715200kb)
+```
 
+Now, please try check the status of the job we just submitted. 
 
+__CPU and Memory Utilisation:__
 
+Users are encouraged to keep monitoring their own jobs' utilisation rate at every stage because, if they run into errors and fail to exit, this shows up clearly in the drop in utilisation rate. 
 
+To see how much CPU and memory the job actually has been using, we can use the command `nqstat_anu`. This command only works when the job is running, if the job has finished it would return nothing. 
 
+```sh
+nqstat_anu 12345678
+```
 
+You should see something like this:
 
+```
+                               %CPU  WallTime  Time Lim     RSS    mem  memlim  cpus
+12345678 R aaa777  a00 job.sh  23    00:36:47   2:00:00  5093MB 5093MB 190.0GB    48
+```
 
+The output shows the CPU utilisation rate in the column `%CPU` and the peak memory usage in the column `RSS` and `mem`. 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+Please check the CPU and Memory utilisation of our variant calling job. 
 
 # References 
 
-NCI User Guide - [0. Welcome to Gadi](https://opus.nci.org.au/display/Help/0.+Welcome+to+Gadi) 
-
-
-
+* NCI User Guide - [0. Welcome to Gadi](https://opus.nci.org.au/display/Help/0.+Welcome+to+Gadi) 
+* NCI User Guide - [PBS Directives Explained](https://opus.nci.org.au/display/Help/PBS+Directives+Explained) 
