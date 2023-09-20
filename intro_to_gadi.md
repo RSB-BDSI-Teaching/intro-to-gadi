@@ -5,11 +5,11 @@
 * Logging in to Gadi via SSH or are@NCI's web terminal 
 * Explore home, scratch, and gdata folder 
 * Use software applications on Gadi 
-
+* Normal, copyq, and interactive jobs 
 * Run FastQC analysis on DNA sequencing data 
-* Align reads to reference genome 
-* 
-
+* Testing the variant calling workflow on Gadi 
+* Submitting the variant calling analysis job
+* Monitoring job status 
 
 ## Logging in to Gadi
 
