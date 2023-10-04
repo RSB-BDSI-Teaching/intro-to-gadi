@@ -10,6 +10,7 @@
 * Testing the variant calling workflow on Gadi 
 * Submitting the variant calling analysis job
 * Monitoring job status 
+* Using Conda on Gadi 
 
 ## Logging in to Gadi
 
@@ -544,7 +545,97 @@ The output shows the CPU utilisation rate in the column `%CPU` and the peak memo
 
 Please check the CPU and Memory utilisation of our variant calling job. 
 
+## Using Conda on Gadi 
+
+Gadi doesn't have a centrally installed Conda for us to use. However, you can install Conda to your home directory or your project's `gdata` folder to use it. Here, I'm going to introduce you how to install Miniconda to your home directory. 
+
+First, we need to download the run the installer. 
+
+```sh
+cd ~
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+```
+
+After installing, initialise your newly-installed Miniconda. 
+
+```sh
+~/miniconda3/bin/conda init bash
+~/miniconda3/bin/conda init zsh
+```
+
+And Conda now is ready to use, you can test it by running 
+
+```sh
+conda --version 
+```
+
+## Install R packages on Gadi 
+
+Gadi has several versions of R centrally installed, but not packages. To install R packages, you need to load appropriate `Intel` modules. NCI recommends using the same `Intel` compiler version that were used to build R. To check which `Intel` module was used for the version of R, you can read the `/apps/R/<version>/README.nci` file. 
+
+1. Check the version of Intel compiler for the version of R you need 
+
+```sh
+less /apps/R/4.3.1/README.nci
+```
+
+The version of Intel compiler used for building R is `intel-compiler/2021.10.0`
+
+2. Load R and the Intel compiler
+
+```sh
+module load R/4.3.1
+module load intel-compiler/2021.10.0 
+```
+
+3. Go into the R command line interface
+
+```sh
+R
+```
+
+4. Install the packages you need using `install.packages()`
+
+```R
+install.packages("randomForest")
+```
+
+You will be prompted with a question, please type yes and enter.
+
+```
+Warning in install.packages("randomForest") :
+  'lib = "/apps/R/4.3.1/lib64/R/library"' is not writable
+Would you like to use a personal library instead? (yes/No/cancel) 
+```
+
+You will be prompted with another one, please choose yes. This will create a directory under your home directory and install R packages to there. 
+
+```
+Would you like to create a personal library
+‘/home/147/user1234/R/x86_64-pc-linux-gnu-library/4.3’
+to install packages into? (yes/No/cancel) 
+```
+
+5. Use package
+
+```R
+library("randomForest")
+```
+
+```
+randomForest 4.7-1.1
+Type rfNews() to see new features/changes/bug fixes.
+```
+
+6. You only need to install the package once
+
+The next time you load the same version of R, you will have the packages you previously installed. But if you use a different version of R, you might need to install it again. 
+
 # References 
 
 * NCI User Guide - [0. Welcome to Gadi](https://opus.nci.org.au/display/Help/0.+Welcome+to+Gadi) 
 * NCI User Guide - [PBS Directives Explained](https://opus.nci.org.au/display/Help/PBS+Directives+Explained) 
+* NCI User Guide - [R](https://opus.nci.org.au/display/Help/R)
+* NCI User Guide - [4 Conda virtual environment](https://opus.nci.org.au/display/OOD/4+Conda+virtual+environment) 
+* Anaconda Inc - [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/index.html) 
