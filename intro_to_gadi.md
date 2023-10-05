@@ -11,6 +11,7 @@
 * Submitting the variant calling analysis job
 * Monitoring job status 
 * Using Conda on Gadi 
+* Install R packages on Gadi 
 
 ## Logging in to Gadi
 
