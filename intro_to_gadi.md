@@ -158,7 +158,7 @@ You can also use options to limit the results shown, try `nci-files-report -h` t
 
 ## Use software applications on Gadi 
 
-Gadi has many software applications centrally installed and uses Environmental Modules to manage them. To run any of the them, we need to load the corresponding module first. If the application requires license, join the corresponding software group through [my.nci.org.au](my.nci.org.au). 
+Gadi has many software applications centrally installed and uses Environmental Modules to manage them. To run any of the them, we need to load the corresponding module first. If the application requires license, join the corresponding software group through [MyNCI](https://my.nci.org.au/mancini/). 
 
 If the applications or packages you need are not centrally installed on Gadi, please contact [help@nci.org.au](https://nci.org.au/users/nci-helpdesk) to discuss whether it is suitable to install the missing ones centrally on Gadi. If it cannot be centrally installed, you can also contact the help desk to assist you to install it inside of your project folder. 
 
@@ -461,6 +461,8 @@ Here, I put the codes together into a script and it can loop through all of our 
 #PBS -l walltime=01:00:00
 #PBS -l storage=scratch/vp91
 #PBS -l wd
+#PBS -M email_address
+#PBS -m be 
 
 module load bwa/0.7.17
 module load samtools/1.9
@@ -506,7 +508,7 @@ Once a job submission is accepted, its Job ID is shown in the return message and
 
 __Queue status:__
 
-To look up the status of a job in the queue, we can use the command `qstat`. For example, to loop up the job 12345678 in the queue:
+To look up the status of a job in the queue, we can use the command `qstat`. For example, to look up the job 12345678 in the queue:
 
 ```sh
 qstat -swx 12345678
@@ -581,7 +583,7 @@ Gadi has several versions of R centrally installed, but not packages. To install
 less /apps/R/4.3.1/README.nci
 ```
 
-The version of Intel compiler used for building R is `intel-compiler/2021.10.0`
+The version of Intel compiler used for building R 4.3.1 is `intel-compiler/2021.10.0`. 
 
 2. Load R and the Intel compiler
 
